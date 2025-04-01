@@ -5,6 +5,11 @@ def latex_to_python(latex_expr):
     space_commands = ["\\quad", "\\qquad", "\\,", "\\:", "\\;", "\\!"]
     for cmd in space_commands:
         latex_expr = latex_expr.replace(cmd, "")
+    
+    # Убираем \textstyle
+    latex_expr = latex_expr.replace("\\textstyle", "")
+    latex_expr = latex_expr.replace("\\scriptstyle", "")
+    latex_expr = latex_expr.replace("\\scriptscriptstyle", "")
 
     # Явно заменяем \operatorname*{lim} на \lim
     latex_expr = latex_expr.replace(r"\operatorname*{lim}", r"\lim")
@@ -33,11 +38,3 @@ def latex_to_python(latex_expr):
         except Exception as e:
             raise ValueError(f"Ошибка при преобразовании: {e}")
 
-# Тест
-expr1 = r"\operatorname*{lim}_{x\to0}{\frac{\sin(x)}{x}}"  # Предел
-expr2 = r"x^2 + y = 4"  # Уравнение
-expr3 = r"\frac{a}{b} + c"  # Обычное выражение
-
-print(latex_to_python(expr1))  # Limit(sin(x)/x, x, 0)
-print(latex_to_python(expr2))  # Eq(x**2 + y, 4)
-print(latex_to_python(expr3))  # a/b + c
