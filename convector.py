@@ -6,12 +6,10 @@ def latex_to_python(latex_expr):
     for cmd in space_commands:
         latex_expr = latex_expr.replace(cmd, "")
     
-    # Убираем \textstyle
     latex_expr = latex_expr.replace("\\textstyle", "")
     latex_expr = latex_expr.replace("\\scriptstyle", "")
     latex_expr = latex_expr.replace("\\scriptscriptstyle", "")
 
-    # Явно заменяем \operatorname*{lim} на \lim
     latex_expr = latex_expr.replace(r"\operatorname*{lim}", r"\lim")
 
     if "=" in latex_expr:

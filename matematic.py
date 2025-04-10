@@ -199,5 +199,4 @@ def determine_and_solve(input_str: str):
     except Exception as e:
         return f"Ошибка: {e}"
     
-print(calculate_limit("Limit(sin(x)/x, x, 0, dir='+')"))
 print(determine_and_solve("Limit(sin(x)/x, x, 0, dir='+')"))
