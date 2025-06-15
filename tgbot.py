@@ -22,7 +22,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-TOKEN = "7790375344:AAFM-T2hGdQvzCPmvsOBhj82S5DRIcJfywY"
+TOKEN = ""
 IMAGE_DIR = "example_images"
 ANSWER_IMAGE_DIR = "image_answer_photo"
 ABS_PUTH ='C:/python/kur/'
