@@ -1,69 +1,49 @@
 import cv2
 import numpy as np
 import os
-from PIL import Image
-
-def correct_perspective(image):
-    """ Исправляет перспективу, если изображение снято под углом """
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(gray, 50, 150)  # Поиск контуров
-
-    # Находим контуры
-    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not contours:
-        return image  # Если контуров нет, возвращаем оригинал
-
-    # Берем самый большой контур (предполагаем, что это область формулы)
-    largest_contour = max(contours, key=cv2.contourArea)
-    epsilon = 0.02 * cv2.arcLength(largest_contour, True)
-    approx = cv2.approxPolyDP(largest_contour, epsilon, True)
-
-    if len(approx) == 4:  # Если контур похож на четырехугольник, исправляем перспективу
-        pts = np.float32([p[0] for p in approx])
-        width = max(np.linalg.norm(pts[0] - pts[1]), np.linalg.norm(pts[2] - pts[3]))
-        height = max(np.linalg.norm(pts[1] - pts[2]), np.linalg.norm(pts[3] - pts[0]))
-
-        dst = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.float32)
-        M = cv2.getPerspectiveTransform(pts, dst)
-        image = cv2.warpPerspective(image, M, (int(width), int(height)))
-
-    return image
-
-def apply_vignette(image):
-    """ Добавляет эффект размытия по краям, чтобы сфокусироваться на центре """
+def apply_vignette(image, output_folder, step_counter):
     rows, cols = image.shape[:2]
     
-    # Создаем маску градиентного затемнения
     X_resultant_kernel = cv2.getGaussianKernel(cols, cols / 3)
     Y_resultant_kernel = cv2.getGaussianKernel(rows, rows / 3)
-    
     kernel = Y_resultant_kernel * X_resultant_kernel.T
     mask = 255 * kernel / np.linalg.norm(kernel)
     
-    # Применяем затемнение
-    blurred_image = cv2.GaussianBlur(image, (21, 21), 0)
-    vignette = cv2.addWeighted(image, 0.7, blurred_image, 0.3, 0)
+    cv2.imwrite(f"{output_folder}/{step_counter}_vignette_mask.png", mask)
+    step_counter += 1
     
-    return vignette
+    blurred_image = cv2.GaussianBlur(image, (21, 21), 0)
+    cv2.imwrite(f"{output_folder}/{step_counter}_blurred_for_vignette.png", blurred_image)
+    step_counter += 1
+    
+    vignette = cv2.addWeighted(image, 0.7, blurred_image, 0.3, 0)
+    cv2.imwrite(f"{output_folder}/{step_counter}_vignette_applied.png", vignette)
+    step_counter += 1
+    
+    return vignette, step_counter
 
 def preprocess_image(image_path):
-    # Загружаем изображение
+    output_folder = "preprocess"
+    step_counter = 1
+    
     img = cv2.imread(image_path)
-
-    # Исправляем перспективу
-    img = correct_perspective(img)
-
-    # Переводим в градации серого
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # Выравниваем контраст (CLAHE)
+    cv2.imwrite(f"{output_folder}/{step_counter}_original.png", img)
+    step_counter += 1
+    
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite(f"{output_folder}/{step_counter}_grayscale.png", gray)
+    step_counter += 1
+    
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    img = clahe.apply(img)
-
-    img = apply_vignette(img)
-
-    processed_path = "processed_image.png"
-    cv2.imwrite(processed_path, img)
-
+    clahe_img = clahe.apply(gray)
+    cv2.imwrite(f"{output_folder}/{step_counter}_clahe.png", clahe_img)
+    step_counter += 1
+    
+    final_img, step_counter = apply_vignette(clahe_img, output_folder, step_counter)
+    
+    processed_path = f"{output_folder}/final_processed.png"
+    cv2.imwrite(processed_path, final_img)
+    
     return processed_path
 
+preprocess_image("testimage/test.png")

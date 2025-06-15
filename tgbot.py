@@ -10,41 +10,34 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from image import process_image
-from matematic import determine_and_solve
 from database import insert_report, engine
 from sympy import latex
 from sqlalchemy.exc import SQLAlchemyError
 from aiogram.types import FSInputFile
 from generate_answer_on_image import process_math_expression
 
-# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# Конфигурация
 TOKEN = "7790375344:AAFM-T2hGdQvzCPmvsOBhj82S5DRIcJfywY"
 IMAGE_DIR = "example_images"
 ANSWER_IMAGE_DIR = "image_answer_photo"
 ABS_PUTH ='C:/python/kur/'
 processing_lock = asyncio.Lock()
 
-# Состояния бота
 class UserState(StatesGroup):
     waiting_for_math_expression = State()
     waiting_for_report = State()
 
-# Инициализация бота
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
-# Создаем папки для изображений, если их нет
 os.makedirs(IMAGE_DIR, exist_ok=True)
 os.makedirs(ANSWER_IMAGE_DIR, exist_ok=True)
 
-# Клавиатура с основными командами
 def get_main_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -171,13 +164,13 @@ async def handle_math_expression(message: Message, state: FSMContext):
         await message.answer("🧮 Решаю пример...")
         solution_photo = process_math_expression(expression) 
 
-        image_path = os.path.join(solution_photo)  # Предполагаем, что solution содержит полный путь
+        image_path = os.path.join(solution_photo)  
         photo = FSInputFile(image_path)
         await bot.send_photo(chat_id=message.chat.id, photo=photo)
             
-            # Удаляем временные файлы
+    
         try:
-            os.remove(image_path)   # Удаляем обработанный результат
+            os.remove(image_path) 
             print(f"Удалены временные файлы: {image_path}")
         except Exception as delete_error:
             logger.error(f"Error deleting temp files: {delete_error}")
@@ -193,37 +186,30 @@ async def handle_math_expression(message: Message, state: FSMContext):
 async def handle_photo(message: Message):
     async with processing_lock:  
         try:
-            # Создаем директорию для изображений, если её нет
             os.makedirs(IMAGE_DIR, exist_ok=True)
             
-            # Получаем фото максимального качества
             photo = message.photo[-1]
             file_info = await bot.get_file(photo.file_id)
 
-            # Генерируем уникальное имя файла
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             local_path = os.path.join(IMAGE_DIR, f"math_{timestamp}.jpg")
 
-            # Скачиваем файл
             await bot.download_file(file_info.file_path, local_path)
             await message.answer("🔍 Обрабатываю изображение...")
             
-            # Обрабатываем изображение
             solution = process_image(local_path)
             print("=================")
             print(local_path)
             print(solution)
             print("=================")
 
-            # Отправляем результат
-            image_path = os.path.join(solution)  # Предполагаем, что solution содержит полный путь
+            image_path = os.path.join(solution)  
             photo = FSInputFile(image_path)
             await bot.send_photo(chat_id=message.chat.id, photo=photo)
             
-            # Удаляем временные файлы
             try:
-                os.remove(local_path)  # Удаляем скачанное фото
-                os.remove(image_path)   # Удаляем обработанный результат
+                os.remove(local_path)  
+                os.remove(image_path)   
                 print(f"Удалены временные файлы: {local_path}, {image_path}")
             except Exception as delete_error:
                 logger.error(f"Error deleting temp files: {delete_error}")

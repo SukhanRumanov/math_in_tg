@@ -11,8 +11,9 @@ def process_image(image_path):
         model = LatexOCR()
         latex = model(pil_img)
         python_code = latex_to_python(latex)
-
+        print("Latex формат:")
         print(latex)
+        print("Sympy формат:")
         print(python_code)
 
         answer = process_math_expression(str(python_code))

@@ -39,24 +39,18 @@ def calculate_derivative(expression: str, variable: str = 'x'):
     except Exception as e:
         return f"Ошибка: {e}"
 
-import sympy as sp
-
 def calculate_limit(expression: str):
     try:
-        # Проверяем, начинается ли строка с "Limit(" и заканчивается ли на ")"
         if not expression.startswith("Limit(") or not expression.endswith(")"):
             return "Некорректный формат предела"
         
-        # Убираем "Limit(" и ")" и разбиваем аргументы
-        inner_args = expression[6:-1]  # Убираем "Limit(" и ")"
-        
-        # Разбиваем аргументы с учетом того, что dir='+' может содержать запятые
+        inner_args = expression[6:-1]  
         args = []
         current_arg = ""
         in_quotes = False
         for char in inner_args:
             if char == "'" or char == '"':
-                in_quotes = not in_quotes  # Переключаем состояние "в кавычках"
+                in_quotes = not in_quotes  
             if char == "," and not in_quotes:
                 args.append(current_arg.strip())
                 current_arg = ""
@@ -65,44 +59,42 @@ def calculate_limit(expression: str):
         if current_arg:
             args.append(current_arg.strip())
         
-        # Проверяем количество аргументов
         if len(args) < 3 or len(args) > 4:
             return "Некорректный формат предела"
         
-        # Обрабатываем функцию, переменную и точку
         func = sp.sympify(args[0].strip())
         var = sp.symbols(args[1].strip())
         point = sp.sympify(args[2].strip())
         
-        # Обрабатываем направление (если есть)
         direction = None
         if len(args) == 4:
             dir_arg = args[3].strip()
             if dir_arg.startswith("dir="):
                 direction = dir_arg[4:].strip("'\"")
 
-        # Вычисляем предел
         solution = sp.limit(func, var, point, dir=direction)
         return solution
     except Exception as e:
         return f"Ошибка: {e}"
+    
+    
 def calculate_log(expression: str):
     try:
         if expression.startswith("ln(") and expression.endswith(")"):
-            inner = expression[3:-1]  # Убираем "ln(" и ")"
+            inner = expression[3:-1]  
             a = inner.strip()
             a_expr = sp.sympify(a)
-            return sp.log(a_expr)  # Натуральный логарифм
+            return sp.log(a_expr)  
         
         elif expression.startswith("lg(") and expression.endswith(")"):
-            inner = expression[3:-1]  # Убираем "lg(" и ")"
+            inner = expression[3:-1]  
             a = inner.strip()
             a_expr = sp.sympify(a)
-            return sp.log(a_expr, 10)  # Логарифм по основанию 10
+            return sp.log(a_expr, 10) 
         
         elif expression.startswith("log(") and expression.endswith(")"):
-            inner = expression[4:-1]  # Убираем "log(" и ")"
-            args = [arg.strip() for arg in inner.split(",")]  # Разделяем аргументы
+            inner = expression[4:-1]  
+            args = [arg.strip() for arg in inner.split(",")]  
             
             if len(args) == 0 or len(args) > 2:
                 return "Неверный формат логарифма"
@@ -110,7 +102,7 @@ def calculate_log(expression: str):
             if len(args) == 1:
                 a = args[0]
                 a_expr = sp.sympify(a)
-                return sp.log(a_expr)  # Натуральный логарифм
+                return sp.log(a_expr)  
             
             elif len(args) == 2:
                 a, b = args
@@ -165,7 +157,6 @@ def determine_and_solve(input_str: str):
         if input_str.startswith("Limit(") and input_str.endswith(")"):
             return calculate_limit(input_str)
 
-        # Проверяем, является ли строка уравнением (содержит "=" и не является пределом)
         elif '=' in input_str and not input_str.startswith("Limit("):
             return solve_equation(input_str)
 
@@ -199,4 +190,3 @@ def determine_and_solve(input_str: str):
     except Exception as e:
         return f"Ошибка: {e}"
     
-print(determine_and_solve("Limit(sin(x)/x, x, 0, dir='+')"))

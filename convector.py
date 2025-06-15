@@ -27,8 +27,6 @@ def latex_to_python(latex_expr):
     else:
         try:
             sympy_expr = parse_latex(latex_expr)
-
-            # Если это предел, создаем объект Limit без 'dir'
             if isinstance(sympy_expr, Limit):
                 return Limit(sympy_expr.args[0], sympy_expr.args[1], sympy_expr.args[2])
 
